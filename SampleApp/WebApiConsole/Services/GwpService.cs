@@ -4,20 +4,11 @@ using WebApiConsole.Repositories;
 
 namespace WebApiConsole.Services;
 
-/// <summary>
-/// Service interface for GWP business logic
-/// </summary>
 public interface IGwpService
 {
-    /// <summary>
-    /// Calculates average GWP for specified country and lines of business
-    /// </summary>
     Task<GwpAverageResponse> GetAverageGwpAsync(GwpAverageRequest request);
 }
 
-/// <summary>
-/// Service implementation for GWP business logic
-/// </summary>
 public class GwpService : IGwpService
 {
     private readonly IGwpRepository _repository;
@@ -32,17 +23,12 @@ public class GwpService : IGwpService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Calculates average GWP for specified country and lines of business
-    /// Results are cached for subsequent requests
-    /// </summary>
     public async Task<GwpAverageResponse> GetAverageGwpAsync(GwpAverageRequest request)
     {
         ValidateRequest(request);
 
         var cacheKey = GenerateCacheKey(request);
 
-        // Try to get from cache
         var cachedResult = _cacheService.Get<GwpAverageResponse>(cacheKey);
         if (cachedResult != null)
         {
@@ -54,7 +40,6 @@ public class GwpService : IGwpService
         _logger.LogInformation("Calculating GWP average for country: {Country}, LOBs: {Lobs}",
             request.Country, string.Join(",", request.Lob));
 
-        // Fetch data from repository
         var gwpData = await _repository.GetGwpDataAsync(request.Country, request.Lob);
 
         if (gwpData.Count == 0)
@@ -64,7 +49,6 @@ public class GwpService : IGwpService
             return new GwpAverageResponse();
         }
 
-        // Calculate averages
         var response = new GwpAverageResponse();
         var groupedByLob = gwpData.GroupBy(d => d.Lob, StringComparer.OrdinalIgnoreCase);
 
@@ -75,36 +59,20 @@ public class GwpService : IGwpService
             _logger.LogDebug("Calculated average for LOB {Lob}: {Average}", lobGroup.Key, average);
         }
 
-        // Cache the result
         _cacheService.Set(cacheKey, response, TimeSpan.FromMinutes(CacheExpirationMinutes));
 
         return response;
     }
 
-    /// <summary>
-    /// Validates the request data
-    /// </summary>
     private void ValidateRequest(GwpAverageRequest request)
     {
+        // TODO: Add more validation if needed (e.g., check for valid country codes, valid LOBs, etc.)
         if (string.IsNullOrWhiteSpace(request.Country))
         {
             throw new ArgumentException("Country code cannot be empty or null", nameof(request.Country));
         }
-
-        if (request.Lob == null || request.Lob.Count == 0)
-        {
-            throw new ArgumentException("At least one line of business must be specified", nameof(request.Lob));
-        }
-
-        if (request.Lob.Any(l => string.IsNullOrWhiteSpace(l)))
-        {
-            throw new ArgumentException("Lines of business cannot contain empty or null values", nameof(request.Lob));
-        }
     }
 
-    /// <summary>
-    /// Generates a cache key for the request
-    /// </summary>
     private string GenerateCacheKey(GwpAverageRequest request)
     {
         var sortedLobs = string.Join("_", request.Lob.OrderBy(l => l, StringComparer.OrdinalIgnoreCase));

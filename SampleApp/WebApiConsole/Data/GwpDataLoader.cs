@@ -1,13 +1,10 @@
-using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration;
+using System.Globalization;
 using WebApiConsole.Models;
 
 namespace WebApiConsole.Data;
 
-/// <summary>
-/// Represents a row in the gwpByCountry.csv file
-/// </summary>
 internal class GwpByCountryRecord
 {
     public string Country { get; set; } = string.Empty;
@@ -62,10 +59,6 @@ internal class GwpByCountryMap : ClassMap<GwpByCountryRecord>
     }
 }
 
-/// <summary>
-/// Loads GWP data from CSV file into memory
-/// Converts gwpByCountry.csv format to internal GwpData format
-/// </summary>
 public class GwpDataLoader
 {
     private readonly ILogger<GwpDataLoader> _logger;
@@ -78,9 +71,6 @@ public class GwpDataLoader
         _dataFilePath = Path.Combine(environment.ContentRootPath, "Data", "gwpByCountry.csv");
     }
 
-    /// <summary>
-    /// Loads all GWP data from CSV file and converts to internal format
-    /// </summary>
     public async Task<List<GwpData>> LoadDataAsync()
     {
         if (_cachedData != null)
@@ -101,54 +91,22 @@ public class GwpDataLoader
         try
         {
             var records = new List<GwpData>();
-            
+
             using (var reader = new StreamReader(_dataFilePath))
             {
                 var config = new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
                     HeaderValidated = null, // Disable strict header validation
                 };
-                
+
                 using (var csv = new CsvReader(reader, config))
                 {
-                    // Register the class map for case-insensitive header matching
                     csv.Context.RegisterClassMap<GwpByCountryMap>();
                     var csvRecords = csv.GetRecords<GwpByCountryRecord>().ToList();
-                    
-                    // Convert from wide format (years as columns) to long format (rows)
-                    foreach (var record in csvRecords)
-                    {
-                        // Add each year's premium as a separate record
-                        var yearPremiums = new Dictionary<int, double?>
-                        {
-                            { 2008, record.Y2008 },
-                            { 2009, record.Y2009 },
-                            { 2010, record.Y2010 },
-                            { 2011, record.Y2011 },
-                            { 2012, record.Y2012 },
-                            { 2013, record.Y2013 },
-                            { 2014, record.Y2014 },
-                            { 2015, record.Y2015 }
-                        };
-                        
-                        foreach (var (year, premium) in yearPremiums)
-                        {
-                            // Only include records with values
-                            if (premium.HasValue && premium.Value > 0)
-                            {
-                                records.Add(new GwpData
-                                {
-                                    Country = record.Country,
-                                    Lob = record.LineOfBusiness,
-                                    Year = year,
-                                    Premium = premium.Value
-                                });
-                            }
-                        }
-                    }
+                    AddRecordsFromCsv(csvRecords, records);
                 }
             }
-            
+
             _cachedData = records;
             _logger.LogInformation("Successfully loaded {RecordCount} GWP records", records.Count);
             return await Task.FromResult(records);
@@ -160,18 +118,44 @@ public class GwpDataLoader
         }
     }
 
-    /// <summary>
-    /// Gets all available countries in the dataset
-    /// </summary>
+    private static void AddRecordsFromCsv(IEnumerable<GwpByCountryRecord> csvRecords, List<GwpData> records)
+    {
+        foreach (var record in csvRecords)
+        {
+            var yearPremiums = new Dictionary<int, double?>
+            {
+                { 2008, record.Y2008 },
+                { 2009, record.Y2009 },
+                { 2010, record.Y2010 },
+                { 2011, record.Y2011 },
+                { 2012, record.Y2012 },
+                { 2013, record.Y2013 },
+                { 2014, record.Y2014 },
+                { 2015, record.Y2015 }
+            };
+
+            foreach (var (year, premium) in yearPremiums)
+            {
+                if (!premium.HasValue || premium.Value <= 0)
+                    continue;
+
+                records.Add(new GwpData
+                {
+                    Country = record.Country,
+                    Lob = record.LineOfBusiness,
+                    Year = year,
+                    Premium = premium.Value
+                });
+            }
+        }
+    }
+
     public async Task<List<string>> GetAvailableCountriesAsync()
     {
         var data = await LoadDataAsync();
         return data.Select(d => d.Country).Distinct().OrderBy(c => c).ToList();
     }
 
-    /// <summary>
-    /// Gets all available lines of business
-    /// </summary>
     public async Task<List<string>> GetAvailableLobsAsync()
     {
         var data = await LoadDataAsync();

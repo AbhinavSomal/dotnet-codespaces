@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
-using WebApiConsole.Caching;
 using WebApiConsole.Controllers;
 using WebApiConsole.Models;
 using WebApiConsole.Services;

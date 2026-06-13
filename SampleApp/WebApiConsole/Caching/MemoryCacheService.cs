@@ -2,9 +2,6 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace WebApiConsole.Caching;
 
-/// <summary>
-/// In-memory cache service implementation
-/// </summary>
 public class MemoryCacheService : ICacheService
 {
     private readonly IMemoryCache _memoryCache;
@@ -17,9 +14,6 @@ public class MemoryCacheService : ICacheService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Gets a value from the cache
-    /// </summary>
     public TValue? Get<TValue>(string key)
     {
         var cacheKey = GetCacheKey(key);
@@ -33,9 +27,6 @@ public class MemoryCacheService : ICacheService
         return default;
     }
 
-    /// <summary>
-    /// Sets a value in the cache
-    /// </summary>
     public void Set<TValue>(string key, TValue value, TimeSpan? expiration = null)
     {
         var cacheKey = GetCacheKey(key);
@@ -47,7 +38,7 @@ public class MemoryCacheService : ICacheService
         }
         else
         {
-            // Default 1 hour expiration
+            // Default 1 hour expiration, can be made configurable if needed
             cacheOptions.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
         }
 
@@ -55,9 +46,6 @@ public class MemoryCacheService : ICacheService
         _logger.LogDebug("Cached value for key: {Key} with expiration: {Expiration}", key, expiration);
     }
 
-    /// <summary>
-    /// Removes a value from the cache
-    /// </summary>
     public void Remove(string key)
     {
         var cacheKey = GetCacheKey(key);
@@ -65,9 +53,6 @@ public class MemoryCacheService : ICacheService
         _logger.LogDebug("Removed cache entry for key: {Key}", key);
     }
 
-    /// <summary>
-    /// Gets a value from cache or executes the factory function
-    /// </summary>
     public async Task<TValue> GetOrSetAsync<TValue>(string key, Func<Task<TValue>> factory, TimeSpan? expiration = null)
     {
         var cachedValue = Get<TValue>(key);
@@ -81,5 +66,8 @@ public class MemoryCacheService : ICacheService
         return value;
     }
 
-    private string GetCacheKey(string key) => $"{CacheKeyPrefix}{key}";
+    private string GetCacheKey(string key)
+    {
+        return $"{CacheKeyPrefix}{key}";
+    }
 }

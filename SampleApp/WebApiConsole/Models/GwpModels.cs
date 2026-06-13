@@ -1,15 +1,9 @@
 namespace WebApiConsole.Models;
 
-/// <summary>
-/// Response model for GWP average calculation
-/// </summary>
 public class GwpAverageResponse : Dictionary<string, double>
 {
 }
 
-/// <summary>
-/// Entity representing Gross Written Premium data
-/// </summary>
 public class GwpData
 {
     public required string Country { get; set; }
@@ -18,9 +12,6 @@ public class GwpData
     public double Premium { get; set; }
 }
 
-/// <summary>
-/// Error response model
-/// </summary>
 public class ErrorResponse
 {
     public string Message { get; set; } = string.Empty;

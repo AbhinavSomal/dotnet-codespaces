@@ -1,6 +1,4 @@
-using Microsoft.Extensions.Logging;
 using Moq;
-using WebApiConsole.Data;
 using WebApiConsole.Models;
 using WebApiConsole.Repositories;
 using Xunit;
@@ -72,33 +70,5 @@ public class GwpRepositoryTests
 
         // Assert
         Assert.Empty(result);
-    }
-
-    [Fact]
-    public async Task GetAvailableCountriesAsync_ReturnsUniqueSortedCountries()
-    {
-        // Arrange
-        var countries = new List<string> { "ae", "uk", "us" };
-        _mockRepository.Setup(r => r.GetAvailableCountriesAsync()).ReturnsAsync(countries);
-
-        // Act
-        var result = await _mockRepository.Object.GetAvailableCountriesAsync();
-
-        // Assert
-        Assert.Equal(countries, result);
-    }
-
-    [Fact]
-    public async Task GetAvailableLobsAsync_ReturnsUniqueSortedLobs()
-    {
-        // Arrange
-        var lobs = new List<string> { "liability", "property", "transport" };
-        _mockRepository.Setup(r => r.GetAvailableLobsAsync()).ReturnsAsync(lobs);
-
-        // Act
-        var result = await _mockRepository.Object.GetAvailableLobsAsync();
-
-        // Assert
-        Assert.Equal(lobs, result);
     }
 }

@@ -4,9 +4,7 @@ using WebApiConsole.Services;
 
 namespace WebApiConsole.Controllers;
 
-/// <summary>
-/// Controller for Country GWP (Gross Written Premium) API endpoints
-/// </summary>
+
 [ApiController]
 [Route("server/api/gwp")]
 public class CountryGwpController : ControllerBase
